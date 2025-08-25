@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Linq;
+using DevToolVault.Refatorado.Core.Models;
 
-namespace DevToolVault.Filters
+namespace DevToolVault.Refatorado.Core.Services
 {
     public class FileFilterManager
     {

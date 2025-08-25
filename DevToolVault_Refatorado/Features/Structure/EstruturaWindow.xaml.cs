@@ -1,7 +1,7 @@
 // DevToolVault_Refatorado/Features/Structure/EstruturaWindow.xaml.cs
 using System.Windows;
-using DevToolVault.Filters; // Certifique-se de que FileFilterManager está acessível
-using DevToolVault.Controls; // Certifique-se de que FileSystemTreeView está acessível
+using DevToolVault.Controls;
+using DevToolVault.Refatorado.Core.Services; // Certifique-se de que FileSystemTreeView está acessível
 
 namespace DevToolVault.Features.Structure
 {

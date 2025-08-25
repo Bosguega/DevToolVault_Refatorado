@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using DevToolVault.Core.Models;
-using DevToolVault.Filters;
+using DevToolVault.Refatorado.Core.Services;
 
 namespace DevToolVault.Services
 {

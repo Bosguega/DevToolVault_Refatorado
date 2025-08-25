@@ -3,7 +3,7 @@ using System.Windows;
 using DevToolVault.Core.Models;
 using DevToolVault.Core.Services;
 using DevToolVault.Features.Filters;
-using DevToolVault.Filters;
+using DevToolVault.Refatorado.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DevToolVault

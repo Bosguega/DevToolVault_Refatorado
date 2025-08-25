@@ -2,10 +2,10 @@
 using System.Windows;
 using System.Windows.Input;
 using DevToolVault.Core.Services;
-using DevToolVault.Filters;
 using DevToolVault.Features.Filters;
 using DevToolVault.Features.Structure;
 using DevToolVault.Features.Export;
+using DevToolVault.Refatorado.Core.Services;
 
 namespace DevToolVault.Features.Start
 {

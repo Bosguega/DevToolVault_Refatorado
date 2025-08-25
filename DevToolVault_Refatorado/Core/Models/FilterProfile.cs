@@ -1,7 +1,7 @@
-﻿// No arquivo Filters/FilterProfile.cs
+﻿
 using System.Collections.Generic;
 
-namespace DevToolVault.Filters
+namespace DevToolVault.Refatorado.Core.Models
 {
     public class FilterProfile
     {

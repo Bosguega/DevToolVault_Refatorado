@@ -1,7 +1,8 @@
 ﻿// Features/Filters/ProjectTypeSelectorWindow.xaml.cs
 using System.Windows;
-using DevToolVault.Filters;
 using DevToolVault.Features.Filters;
+using DevToolVault.Refatorado.Core.Models;
+using DevToolVault.Refatorado.Core.Services;
 
 namespace DevToolVault.Features.Filters
 {

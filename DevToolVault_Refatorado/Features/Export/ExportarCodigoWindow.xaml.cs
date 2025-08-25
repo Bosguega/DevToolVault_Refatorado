@@ -9,7 +9,8 @@ using DevToolVault.Controls;
 using DevToolVault.Core.Models;
 using DevToolVault.Core.Services;
 using DevToolVault.Features.Filters;
-using DevToolVault.Filters;
+using DevToolVault.Refatorado.Core.Models;
+using DevToolVault.Refatorado.Core.Services;
 using DevToolVault.ViewModels;
 using Ookii.Dialogs.Wpf;
 

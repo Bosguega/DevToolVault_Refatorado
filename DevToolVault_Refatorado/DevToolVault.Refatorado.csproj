@@ -13,6 +13,18 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Resources\**" />
+	  <EmbeddedResource Remove="Resources\**" />
+	  <None Remove="Resources\**" />
+	  <Page Remove="Resources\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Remove="Core\Models\FileFilter.cs" />
+	  <Compile Remove="Core\Models\TreeOptions.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="itext7" Version="9.2.0" />
 		<PackageReference Include="MaterialDesignColors" Version="5.2.1" />
 		<PackageReference Include="MaterialDesignThemes" Version="5.2.1" />
@@ -22,10 +34,6 @@
 
 	<ItemGroup>
 		<Content Include="app.ico" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Folder Include="Resources\" />
 	</ItemGroup>
 
 </Project>

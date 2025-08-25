@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using DevToolVault.Filters;
+using DevToolVault.Refatorado.Core.Models;
+using DevToolVault.Refatorado.Core.Services;
 
 namespace DevToolVault.Services
 {

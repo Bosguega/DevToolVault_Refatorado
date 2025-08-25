@@ -6,7 +6,8 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using DevToolVault.Core.Models;
-using DevToolVault.Filters;
+using DevToolVault.Refatorado.Core.Models;
+using DevToolVault.Refatorado.Core.Services;
 using DevToolVault.Services; // Corrigido: Se TreeGeneratorService estiver aqui
 
 namespace DevToolVault.ViewModels

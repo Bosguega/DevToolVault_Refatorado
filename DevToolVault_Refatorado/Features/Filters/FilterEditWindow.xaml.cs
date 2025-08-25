@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Windows;
-using DevToolVault.Filters;
+using DevToolVault.Refatorado.Core.Models;
 
 namespace DevToolVault.Features.Filters
 {
