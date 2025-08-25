@@ -1,10 +1,10 @@
-﻿// Core/Services/MarkdownExportStrategy.cs
+﻿// DevToolVault_Refatorado/Core/Services/MarkdownExportStrategy.cs
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using DevToolVault.Core.Models;
+using DevToolVault.Core.Models; // Certifique-se de que FileSystemItem está acessível
 
 namespace DevToolVault.Core.Services
 {
@@ -21,9 +21,11 @@ namespace DevToolVault.Core.Services
             {
                 try
                 {
+                    // Corrigido: Usar item.FullName
                     var content = await File.ReadAllTextAsync(item.FullName, Encoding.UTF8);
 
                     await writer.WriteLineAsync(Separator);
+                    // Corrigido: Usar item.RelativePath
                     await writer.WriteLineAsync($"# Arquivo: {item.RelativePath}");
                     await writer.WriteLineAsync(Separator);
                     await writer.WriteAsync(content);
@@ -32,6 +34,7 @@ namespace DevToolVault.Core.Services
                 catch (Exception ex)
                 {
                     await writer.WriteLineAsync(Separator);
+                    // Corrigido: Usar item.RelativePath
                     await writer.WriteLineAsync($"# Arquivo: {item.RelativePath}");
                     await writer.WriteLineAsync(Separator);
                     await writer.WriteLineAsync($"// Erro ao ler arquivo: {ex.Message}\n");

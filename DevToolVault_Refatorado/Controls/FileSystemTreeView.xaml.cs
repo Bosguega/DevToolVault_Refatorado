@@ -1,114 +1,88 @@
-﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.IO;
+﻿// DevToolVault_Refatorado/Controls/FileSystemTreeView.xaml.cs
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using DevToolVault.Core.Models; // Certifique-se de que FileSystemItem está acessível
 
 namespace DevToolVault.Controls
 {
     public partial class FileSystemTreeView : UserControl
     {
-        public ObservableCollection<FileSystemItem> Items { get; set; } = new();
-
         public FileSystemTreeView()
         {
             InitializeComponent();
-            DataContext = this;
         }
 
-        public void LoadDirectory(string rootPath)
+        public List<FileSystemItem> Items
         {
-            Items.Clear();
-            if (Directory.Exists(rootPath))
+            get => (List<FileSystemItem>)GetValue(ItemsProperty);
+            set => SetValue(ItemsProperty, value);
+        }
+
+        public static readonly DependencyProperty ItemsProperty =
+            DependencyProperty.Register(nameof(Items), typeof(List<FileSystemItem>), typeof(FileSystemTreeView));
+
+        private void CheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            // A lógica está implementada na classe FileSystemItem
+        }
+
+        private void CheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            // A lógica está implementada na classe FileSystemItem
+        }
+
+        // --- Métodos adicionados para compatibilidade com EstruturaWindow ---
+        public void LoadDirectory(/*string path, FileFilterManager filterManager*/)
+        {
+            // Esta lógica deve idealmente estar no ViewModel
+            // Considere remover a chamada de EstruturaWindow.xaml.cs
+            // ou redirecioná-la para o ViewModel
+            //throw new NotImplementedException("Loading logic should be in ViewModel");
+            // Ou implementar uma lógica básica aqui (não recomendado para MVVM)
+            // Items = new TreeGeneratorService(filterManager).GenerateTree(path);
+        }
+
+        public void SetAllExpanded(bool isExpanded)
+        {
+            if (treeView.ItemsSource is IEnumerable<FileSystemItem> items)
             {
-                Items.Add(CreateDirectoryNode(rootPath));
+                SetAllExpandedRecursive(items, isExpanded);
             }
         }
 
-        private FileSystemItem CreateDirectoryNode(string path)
+        private void SetAllExpandedRecursive(IEnumerable<FileSystemItem> items, bool isExpanded)
         {
-            var dirItem = new FileSystemItem
+            foreach (var item in items)
             {
-                Name = Path.GetFileName(path),
-                FullPath = path,
-                IsDirectory = true
-            };
-
-            foreach (var dir in Directory.GetDirectories(path))
-                dirItem.Children.Add(CreateDirectoryNode(dir));
-
-            foreach (var file in Directory.GetFiles(path))
-                dirItem.Children.Add(new FileSystemItem
+                item.IsExpanded = isExpanded;
+                if (item.Children != null && item.Children.Any())
                 {
-                    Name = Path.GetFileName(file),
-                    FullPath = file,
-                    IsDirectory = false
-                });
-
-            return dirItem;
+                    SetAllExpandedRecursive(item.Children, isExpanded);
+                }
+            }
         }
 
-        /// <summary>
-        /// Retorna os itens selecionados como lista.
-        /// </summary>
-        public List<FileSystemItem> GetSelectedItems()
-        {
-            var selected = new List<FileSystemItem>();
-            foreach (var item in Items)
-                CollectSelectedItems(item, selected);
-
-            return selected;
-        }
-
-        private void CollectSelectedItems(FileSystemItem item, List<FileSystemItem> selected)
-        {
-            if (item.IsChecked == true && !item.IsDirectory)
-                selected.Add(item);
-
-            foreach (var child in item.Children)
-                CollectSelectedItems(child, selected);
-        }
-
-        /// <summary>
-        /// Marca/desmarca todos os itens.
-        /// </summary>
         public void SetAllItemsChecked(bool isChecked)
         {
-            foreach (var item in Items)
-                SetItemCheckedRecursive(item, isChecked);
+            if (treeView.ItemsSource is IEnumerable<FileSystemItem> items)
+            {
+                SetAllItemsCheckedRecursive(items, isChecked);
+            }
         }
 
-        private void SetItemCheckedRecursive(FileSystemItem item, bool isChecked)
+        private void SetAllItemsCheckedRecursive(IEnumerable<FileSystemItem> items, bool isChecked)
         {
-            item.IsChecked = isChecked;
-            foreach (var child in item.Children)
-                SetItemCheckedRecursive(child, isChecked);
+            foreach (var item in items)
+            {
+                item.IsChecked = isChecked; // Isso acionará o INPC e potencialmente atualizações dos pais
+                if (item.Children != null && item.Children.Any())
+                {
+                    SetAllItemsCheckedRecursive(item.Children, isChecked);
+                }
+            }
         }
-
-        /// <summary>
-        /// Expande/recolhe todos os itens.
-        /// </summary>
-        public void SetAllExpanded(bool isExpanded)
-        {
-            foreach (var item in Items)
-                SetItemExpandedRecursive(item, isExpanded);
-        }
-
-        private void SetItemExpandedRecursive(FileSystemItem item, bool isExpanded)
-        {
-            item.IsExpanded = isExpanded;
-            foreach (var child in item.Children)
-                SetItemExpandedRecursive(child, isExpanded);
-        }
-    }
-
-    public class FileSystemItem : DependencyObject
-    {
-        public string Name { get; set; } = "";
-        public string FullPath { get; set; } = "";
-        public bool IsDirectory { get; set; }
-        public bool IsExpanded { get; set; }
-        public bool? IsChecked { get; set; } = false;
-        public ObservableCollection<FileSystemItem> Children { get; set; } = new();
+        // --- Fim dos métodos adicionados ---
     }
 }

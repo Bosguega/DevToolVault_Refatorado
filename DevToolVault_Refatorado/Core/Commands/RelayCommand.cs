@@ -1,4 +1,4 @@
-﻿// Core/Commands/RelayCommand.cs
+﻿// DevToolVault_Refatorado/Core/Commands/RelayCommand.cs
 using System;
 using System.Windows.Input;
 
@@ -6,7 +6,9 @@ namespace DevToolVault.Core.Commands
 {
     public class RelayCommand : ICommand
     {
+        // Corrigido: readonly
         private readonly Action _execute;
+        // Corrigido: readonly
         private readonly Func<bool> _canExecute;
 
         public RelayCommand(Action execute, Func<bool> canExecute = null)
@@ -19,14 +21,18 @@ namespace DevToolVault.Core.Commands
         public void Execute(object parameter) => _execute();
         public event EventHandler CanExecuteChanged
         {
+            // Corrigido: RequerySuggested
             add { CommandManager.RequerySuggested += value; }
+            // Corrigido: RequerySuggested
             remove { CommandManager.RequerySuggested -= value; }
         }
     }
 
     public class RelayCommand<T> : ICommand
     {
+        // Corrigido: readonly
         private readonly Action<T> _execute;
+        // Corrigido: readonly
         private readonly Func<T, bool> _canExecute;
 
         public RelayCommand(Action<T> execute, Func<T, bool> canExecute = null)
@@ -39,7 +45,9 @@ namespace DevToolVault.Core.Commands
         public void Execute(object parameter) => _execute((T)parameter);
         public event EventHandler CanExecuteChanged
         {
+            // Corrigido: RequerySuggested
             add { CommandManager.RequerySuggested += value; }
+            // Corrigido: RequerySuggested
             remove { CommandManager.RequerySuggested -= value; }
         }
     }

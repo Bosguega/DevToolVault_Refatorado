@@ -1,33 +1,56 @@
-﻿using System;
-using System.Collections.ObjectModel;
+﻿// DevToolVault_Refatorado/Core/Models/FileSystemItem.cs
+using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace DevToolVault.Core.Models
 {
+    // Corrigido: INotifyPropertyChanged
     public class FileSystemItem : INotifyPropertyChanged
     {
-        private bool _isChecked = true;
+        private bool? _isChecked;
         private bool _isExpanded;
+        private string _name;
+        private string _fullPath;
+        // Corrigido: _isDirectory
+        private bool _isDirectory;
+        // Corrigido: List<FileSystemItem>
+        private List<FileSystemItem> _children;
+        private FileSystemItem _parent;
 
-        public string FullName { get; set; }
-        public string Name { get; set; }
-        public bool IsDirectory { get; set; }
-        public FileSystemItem Parent { get; set; }
-        public ObservableCollection<FileSystemItem> Children { get; } = new ObservableCollection<FileSystemItem>();
+        // --- Propriedades adicionadas ---
+        private string _fullName; // Novo campo de apoio
+        private string _relativePath; // Novo campo de apoio
 
-        public bool IsChecked
+        // Propriedade FullName (pode ser um alias para FullPath ou definida separadamente)
+        public string FullName
+        {
+            get => _fullName ?? _fullPath; // Padrão para FullPath se _fullName não estiver definido
+            set => SetProperty(ref _fullName, value);
+        }
+
+        // Propriedade RelativePath
+        public string RelativePath
+        {
+            get => _relativePath;
+            set => SetProperty(ref _relativePath, value);
+        }
+        // --- Fim das propriedades adicionadas ---
+
+        public bool? IsChecked
         {
             get => _isChecked;
             set
             {
-                if (_isChecked != value)
+                if (SetProperty(ref _isChecked, value))
                 {
-                    _isChecked = value;
-                    OnPropertyChanged();
-                    Parent?.OnChildCheckedChanged();
+                    // Propagar mudança para filhos quando definido explicitamente
+                    if (value.HasValue)
+                    {
+                        UpdateChildrenState(this, value.Value);
+                    }
+                    // Notificar pai sobre mudança
+                    _parent?.UpdateParentState();
                 }
             }
         }
@@ -35,46 +58,93 @@ namespace DevToolVault.Core.Models
         public bool IsExpanded
         {
             get => _isExpanded;
-            set
-            {
-                if (_isExpanded != value)
-                {
-                    _isExpanded = value;
-                    OnPropertyChanged();
-                }
-            }
+            set => SetProperty(ref _isExpanded, value);
         }
 
-        public string RelativePath
+        public string Name
         {
-            get
-            {
-                if (Parent == null) return Name ?? string.Empty;
-                var parentPath = Parent.RelativePath;
-                return string.IsNullOrEmpty(parentPath) ? Name : Path.Combine(parentPath, Name);
-            }
+            get => _name;
+            set => SetProperty(ref _name, value);
+        }
+
+        public string FullPath
+        {
+            get => _fullPath;
+            set => SetProperty(ref _fullPath, value);
+        }
+
+        public bool IsDirectory
+        {
+            get => _isDirectory;
+            set => SetProperty(ref _isDirectory, value);
+        }
+
+        public List<FileSystemItem> Children
+        {
+            get => _children;
+            set => SetProperty(ref _children, value);
+        }
+
+        public FileSystemItem Parent
+        {
+            get => _parent;
+            set => SetProperty(ref _parent, value);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
-        public void OnChildCheckedChanged()
+        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
         {
-            if (Children.Count == 0) return;
+            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+            field = value;
+            OnPropertyChanged(propertyName);
+            return true;
+        }
 
-            int checkedCount = Children.Count(c => c.IsChecked == true);
-            int uncheckedCount = Children.Count(c => c.IsChecked == false);
+        // Corrigido: OnPropertyChanged
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
 
-            if (checkedCount == Children.Count)
-                _isChecked = true;
-            else if (uncheckedCount == Children.Count)
-                _isChecked = false;
+        // Corrigido: private
+        private void UpdateChildrenState(FileSystemItem item, bool isChecked)
+        {
+            if (item.Children == null) return;
+
+            foreach (var child in item.Children)
+            {
+                child.IsChecked = isChecked;
+                UpdateChildrenState(child, isChecked);
+            }
+        }
+
+        // Corrigido: private
+        private void UpdateParentState()
+        {
+            if (Parent == null) return;
+
+            bool allChecked = true;
+            bool allUnchecked = true;
+
+            foreach (var child in Parent.Children)
+            {
+                if (child.IsChecked != true) allChecked = false;
+                if (child.IsChecked != false) allUnchecked = false;
+            }
+
+            if (allChecked)
+            {
+                Parent.IsChecked = true;
+            }
+            else if (allUnchecked)
+            {
+                Parent.IsChecked = false;
+            }
             else
-                _isChecked = true; // WPF CheckBox não aceita null para bool
-
-            OnPropertyChanged(nameof(IsChecked));
-            Parent?.OnChildCheckedChanged();
+            {
+                Parent.IsChecked = null; // Indeterminado
+            }
         }
     }
 }

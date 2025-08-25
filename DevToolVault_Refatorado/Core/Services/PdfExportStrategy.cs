@@ -1,9 +1,9 @@
-﻿// Core/Services/PdfExportStrategy.cs
+﻿// DevToolVault_Refatorado/Core/Services/PdfExportStrategy.cs
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using DevToolVault.Core.Models;
+using DevToolVault.Core.Models; // Certifique-se de que FileSystemItem está acessível
 using iText.IO.Font;
 using iText.IO.Font.Constants;   // ✅ precisa desse namespace para StandardFonts
 using iText.Kernel.Font;
@@ -33,14 +33,16 @@ namespace DevToolVault.Core.Services
                 {
                     try
                     {
+                        // Corrigido: Usar item.FullName
                         var content = File.ReadAllText(item.FullName);
 
                         // Cabeçalho
                         document.Add(new Paragraph(Separator)
-                            .SetFont(font)
+                             .SetFont(font)
                             .SetFontSize(8)
                             .SetMarginBottom(2));
 
+                        // Corrigido: Usar item.RelativePath
                         document.Add(new Paragraph($"# Arquivo: {item.RelativePath}")
                             .SetFont(font)
                             .SetFontSize(10)
@@ -63,12 +65,13 @@ namespace DevToolVault.Core.Services
                             .SetFont(font)
                             .SetFontSize(8));
 
+                        // Corrigido: Usar item.RelativePath
                         document.Add(new Paragraph($"# Arquivo: {item.RelativePath}")
                             .SetFont(font)
                             .SetFontSize(10));
 
                         document.Add(new Paragraph(Separator)
-                            .SetFont(font)
+                             .SetFont(font)
                             .SetFontSize(8));
 
                         document.Add(new Paragraph($"Erro ao ler arquivo: {ex.Message}")

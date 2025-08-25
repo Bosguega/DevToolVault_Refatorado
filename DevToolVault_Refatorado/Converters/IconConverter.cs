@@ -1,45 +1,72 @@
-﻿using System;
+﻿// DevToolVault_Refatorado/Converters/IconConverter.cs
+using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Windows.Data;
-using MaterialDesignThemes.Wpf;
+using MaterialDesignThemes.Wpf; // Necessário para PackIconKind e PackIcon
 
 namespace DevToolVault.Converters
 {
+    // Corrigido: Nome da classe
     public class IconConverter : IValueConverter
     {
+        // Mapeamento de extensões para PackIconKind
+        private static readonly Dictionary<string, PackIconKind> ExtensionIconMap = new(StringComparer.OrdinalIgnoreCase)
+        {
+            { ".cs", PackIconKind.LanguageCsharp },
+            { ".dart", PackIconKind.FileDocument },
+            { ".json", PackIconKind.FileDocument },
+            { ".xml", PackIconKind.Xml },
+            { ".yml", PackIconKind.FileDocument },
+            { ".yaml", PackIconKind.FileDocument },
+            { ".md", PackIconKind.LanguageMarkdown },
+            { ".txt", PackIconKind.TextBox },
+            { ".html", PackIconKind.LanguageHtml5 },
+            { ".css", PackIconKind.LanguageCss3 },
+            { ".js", PackIconKind.LanguageJavascript },
+            { ".ts", PackIconKind.LanguageTypescript },
+            { ".xaml", PackIconKind.Xml },
+            { ".config", PackIconKind.Settings },
+            { ".ini", PackIconKind.Settings },
+            { ".sln", PackIconKind.MicrosoftVisualStudio },
+            { ".csproj", PackIconKind.MicrosoftVisualStudio },
+            // Adicione mais conforme necessário
+        };
+
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is bool isDirectory && isDirectory)
-                return PackIconKind.Folder;
-
-            if (value is string fullPath)
+            // value é o 'Name' do FileSystemItem (string)
+            if (value is string name)
             {
-                string ext = Path.GetExtension(fullPath).ToLower();
-                return ext switch
+                // Determina a extensão
+                string extension = Path.GetExtension(name).ToLowerInvariant();
+
+                // Se não tem extensão, assume que é uma pasta
+                if (string.IsNullOrEmpty(extension))
                 {
-                    ".cs" => PackIconKind.LanguageCsharp,
-                    ".dart" => PackIconKind.FileDocument,
-                    ".json" => PackIconKind.FileDocument,
-                    ".xml" => PackIconKind.Xml,
-                    ".yml" or ".yaml" => PackIconKind.FileDocument,
-                    ".md" => PackIconKind.LanguageMarkdown,
-                    ".txt" => PackIconKind.TextBox,
-                    ".html" => PackIconKind.LanguageHtml5,
-                    ".css" => PackIconKind.LanguageCss3,
-                    ".js" => PackIconKind.LanguageJavascript,
-                    ".ts" => PackIconKind.LanguageTypescript,
-                    ".xaml" => PackIconKind.Xml,
-                    ".config" or ".ini" => PackIconKind.Settings,
-                    ".sln" or ".csproj" => PackIconKind.MicrosoftVisualStudio,
-                    _ => PackIconKind.FileDocumentOutline
-                };
+                    return new PackIcon { Kind = PackIconKind.Folder, Width = 16, Height = 16 };
+                }
+
+                // Tenta obter o ícone baseado na extensão
+                if (ExtensionIconMap.TryGetValue(extension, out PackIconKind kind))
+                {
+                    return new PackIcon { Kind = kind, Width = 16, Height = 16 };
+                }
+                else
+                {
+                    // Ícone padrão para arquivos desconhecidos
+                    return new PackIcon { Kind = PackIconKind.FileDocumentOutline, Width = 16, Height = 16 };
+                }
             }
 
-            return PackIconKind.FileDocument;
+            // Retorna um ícone padrão se o valor não for uma string
+            return new PackIcon { Kind = PackIconKind.FileDocument, Width = 16, Height = 16 };
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-            => throw new NotImplementedException();
+        {
+            throw new NotImplementedException();
+        }
     }
 }

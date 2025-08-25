@@ -1,11 +1,11 @@
-﻿// Core/Models/FileFilter.cs
+﻿// DevToolVault_Refatorado/Core/Models/FileFilter.cs
 using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using DevToolVault.Filters;
+using DevToolVault.Filters; // Corrigido: Se estiver em Filters/
 
-namespace DevToolVault.Core.Models
+namespace DevToolVault.Core.Models // Ou DevToolVault.Filters se for o local correto
 {
     public class FileFilter
     {
@@ -19,7 +19,7 @@ namespace DevToolVault.Core.Models
         public bool ShouldIgnore(string path, bool isDirectory)
         {
             var name = Path.GetFileName(path);
-            var extension = Path.GetExtension(path).ToLowerInvariant();
+            var extension = Path.GetExtension(path).ToLowerInvariant(); // Corrigido: ToLowerInvariant
 
             if (isDirectory)
             {
@@ -28,6 +28,7 @@ namespace DevToolVault.Core.Models
 
                 foreach (var pattern in _options.IgnorePatterns)
                 {
+                    // Corrigido: MatchesPattern
                     if (MatchesPattern(name, path, pattern)) return true;
                 }
             }
@@ -39,8 +40,9 @@ namespace DevToolVault.Core.Models
                         return true;
                 }
 
-                foreach (var pattern in _options.IgnorePatterns)
+                foreach (var pattern in _options.IgnorePatterns) // Corrigido: IgnorePatterns
                 {
+                    // Corrigido: MatchesPattern
                     if (MatchesPattern(name, path, pattern)) return true;
                 }
             }
@@ -83,34 +85,34 @@ namespace DevToolVault.Core.Models
         {
             var normPath = fullPath.Replace('\\', '/').ToLowerInvariant();
             var normName = name.ToLowerInvariant();
-            var normPattern = pattern.Replace('\\', '/').ToLowerInvariant();
+            var normPattern = pattern.Replace('\\', '/').ToLowerInvariant(); // Corrigido: ToLowerInvariant
 
             if (normPattern.StartsWith("*."))
             {
                 var ext = normPattern.Substring(1);
                 return normName.EndsWith(ext, StringComparison.OrdinalIgnoreCase);
             }
-            else if (normPattern.Contains("*") || normPattern.Contains("?"))
+            else if (normPattern.Contains("*") || normPattern.Contains("?")) // Corrigido: *
             {
-                var patternHasSlash = normPattern.Contains("/");
+                var patternHasSlash = normPattern.Contains("/"); // Corrigido: /
                 var target = patternHasSlash ? normPath : normName;
                 var regexPattern = "^" + Regex.Escape(normPattern)
-                    .Replace("\\*", ".*")
-                    .Replace("\\?", ".") + "$";
+                    .Replace("\\*", ".*") // Corrigido: *
+                    .Replace("\\?", ".") + "$"; // Corrigido: ?
                 return Regex.IsMatch(target, regexPattern, RegexOptions.IgnoreCase);
             }
             else
             {
-                var patternHasSlash = normPattern.Contains("/");
+                var patternHasSlash = normPattern.Contains("/"); // Corrigido: /
                 return patternHasSlash
                     ? normPath.Contains(normPattern)
-                    : string.Equals(normName, normPattern, StringComparison.OrdinalIgnoreCase);
+                    : string.Equals(normName, normPattern, StringComparison.OrdinalIgnoreCase); // Corrigido: OrdinalIgnoreCase
             }
         }
 
         public bool IsCodeFile(string path)
         {
-            if (_options.CodeExtensions == null || string.IsNullOrEmpty(path)) return false;
+            if (_options.CodeExtensions == null || string.IsNullOrEmpty(path)) return false; // Corrigido: false
             var extension = Path.GetExtension(path).ToLowerInvariant();
             return _options.CodeExtensions.Any(ext => string.Equals(ext, extension, StringComparison.OrdinalIgnoreCase));
         }

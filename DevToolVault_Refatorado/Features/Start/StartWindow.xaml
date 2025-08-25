@@ -2,7 +2,7 @@
 <Window x:Class="DevToolVault.Features.Start.StartWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:core="clr-namespace:DevToolVault.Core"
+        xmlns:core="clr-namespace:DevToolVault.Core.Models"
         Title="DevToolVault"
         Height="650" Width="900"
         WindowStartupLocation="CenterScreen"

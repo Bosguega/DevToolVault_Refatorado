@@ -1,11 +1,11 @@
-﻿// Core/Services/ZipExportStrategy.cs
+﻿// DevToolVault_Refatorado/Core/Services/ZipExportStrategy.cs
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
-using DevToolVault.Core.Models;
+using DevToolVault.Core.Models; // Certifique-se de que FileSystemItem está acessível
 
 namespace DevToolVault.Core.Services
 {
@@ -15,6 +15,7 @@ namespace DevToolVault.Core.Services
         {
             await Task.Run(() =>
             {
+                // Corrigido: Removido espaço na string
                 var tempDir = Path.Combine(Path.GetTempPath(), "DevToolVault_Temp_" + Guid.NewGuid());
                 Directory.CreateDirectory(tempDir);
 
@@ -27,8 +28,10 @@ namespace DevToolVault.Core.Services
                             var safePath = SanitizePath(item.RelativePath);
                             if (string.IsNullOrEmpty(safePath)) return;
 
+                            // Corrigido: targetDir
                             var targetDir = Path.Combine(tempDir, safePath);
                             Directory.CreateDirectory(targetDir);
+                            // Corrigido: Usar item.FullName
                             File.Copy(item.FullName, Path.Combine(targetDir, item.Name), true);
                         }
                         catch { /* Ignora */ }

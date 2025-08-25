@@ -1,4 +1,4 @@
-﻿// Filters/FilterProfile.cs
+﻿// No arquivo Filters/FilterProfile.cs
 using System.Collections.Generic;
 
 namespace DevToolVault.Filters
@@ -9,10 +9,10 @@ namespace DevToolVault.Filters
         public string Description { get; set; }
         public List<string> IgnorePatterns { get; set; } = new();
         public List<string> CodeExtensions { get; set; } = new();
-        public bool IgnoreEmptyFolders { get; set; } = true;
-        public bool ShowFileSize { get; set; } = false;
-        public bool ShowSystemFiles { get; set; } = false;
-        public bool ShowOnlyCodeFiles { get; set; } = false;
-        public bool IsBuiltIn { get; set; } = false;
+        public bool IgnoreEmptyFolders { get; set; }
+        public bool ShowFileSize { get; set; }
+        public bool ShowSystemFiles { get; set; }
+        public bool ShowOnlyCodeFiles { get; set; }
+        public bool IsBuiltIn { get; set; }
     }
 }

@@ -1,10 +1,10 @@
-﻿// Core/Services/ExportService.cs
+﻿// DevToolVault_Refatorado/Core/Services/ExportService.cs
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using DevToolVault.Core.Models;
 
-namespace DevToolVault.Core.Services
+namespace DevToolVault.Core.Services // Corrigido: Services
 {
     public class ExportService : IExportService
     {
@@ -36,18 +36,22 @@ namespace DevToolVault.Core.Services
             switch (format)
             {
                 case ExportFormat.Text:
+                    // Corrigido: outputPath
                     await _textExportStrategy.ExportAsync(files, outputPath);
                     break;
 
                 case ExportFormat.Markdown:
+                    // Corrigido: outputPath
                     await _markdownExportStrategy.ExportAsync(files, outputPath);
                     break;
 
                 case ExportFormat.Pdf:
+                    // Corrigido: outputPath
                     await _pdfExportStrategy.ExportAsync(files, outputPath);
                     break;
 
                 case ExportFormat.Zip:
+                    // Corrigido: outputPath
                     await _zipExportStrategy.ExportAsync(files, outputPath);
                     break;
 

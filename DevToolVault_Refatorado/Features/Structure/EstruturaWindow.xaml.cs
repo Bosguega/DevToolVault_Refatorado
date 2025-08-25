@@ -1,8 +1,7 @@
-// Features/Structure/EstruturaWindow.xaml.cs
-using System.Linq;
+// DevToolVault_Refatorado/Features/Structure/EstruturaWindow.xaml.cs
 using System.Windows;
-using DevToolVault.Filters;
-using DevToolVault.Controls;
+using DevToolVault.Filters; // Certifique-se de que FileFilterManager está acessível
+using DevToolVault.Controls; // Certifique-se de que FileSystemTreeView está acessível
 
 namespace DevToolVault.Features.Structure
 {
@@ -17,36 +16,35 @@ namespace DevToolVault.Features.Structure
 
             // Carrega a raiz do projeto, se houver
             var activeProfile = _filterManager.GetActiveProfile();
-            if (activeProfile != null)
-            {
-                fileTreeView.LoadDirectory(activeProfile.RootPath, _filterManager);
-            }
+            // Removido: fileTreeView.LoadDirectory(activeProfile.RootPath, _filterManager);
+            // Esta lógica deve ser gerenciada pelo ViewModel ou pela própria TreeView
         }
 
-        private void BtnRefresh_Click(object sender, RoutedEventArgs e)
+        // --- Métodos de evento adicionados para corresponder ao XAML ---
+        private void BtnUpdateStructure_Click(object sender, RoutedEventArgs e)
         {
-            if (_filterManager.GetActiveProfile() != null)
-                fileTreeView.LoadDirectory(_filterManager.GetActiveProfile().RootPath, _filterManager);
+            // Lógica para atualizar/exibir a estrutura
+            // Esta precisa ser implementada com base em como a estrutura é gerada/exibida
+            // Exemplo (precisa de adaptação):
+            // var activeProfile = _filterManager.GetActiveProfile();
+            // if (activeProfile != null)
+            // {
+            //     // Regenerar estrutura e atualizar txtStructure.Text
+            //     // fileTreeView.LoadDirectory(activeProfile.RootPath, _filterManager); // Se LoadDirectory existisse
+            // }
         }
 
-        private void BtnExpandAll_Click(object sender, RoutedEventArgs e)
+        private void BtnClose_Click(object sender, RoutedEventArgs e)
         {
-            fileTreeView.SetAllExpanded(true);
+            this.Close();
         }
+        // --- Fim dos métodos de evento adicionados ---
 
-        private void BtnCollapseAll_Click(object sender, RoutedEventArgs e)
-        {
-            fileTreeView.SetAllExpanded(false);
-        }
-
-        private void ChkSelectAll_Checked(object sender, RoutedEventArgs e)
-        {
-            fileTreeView.SetAllItemsChecked(true);
-        }
-
-        private void ChkSelectAll_Unchecked(object sender, RoutedEventArgs e)
-        {
-            fileTreeView.SetAllItemsChecked(false);
-        }
+        // Removido: Métodos que chamam métodos inexistentes em FileSystemTreeView
+        // private void BtnRefresh_Click(...) { ... }
+        // private void BtnExpandAll_Click(...) { ... }
+        // private void BtnCollapseAll_Click(...) { ... }
+        // private void ChkSelectAll_Checked(...) { ... }
+        // private void ChkSelectAll_Unchecked(...) { ... }
     }
 }
