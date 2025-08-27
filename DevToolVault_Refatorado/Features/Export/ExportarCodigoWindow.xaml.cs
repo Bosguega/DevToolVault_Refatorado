@@ -1,47 +1,45 @@
 ﻿// DevToolVault_Refatorado/Features/Export/ExportarCodigoWindow.xaml.cs
-// Features/Export/ExportarCodigoWindow.xaml.cs
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using DevToolVault.Controls;
-using DevToolVault.Core.Models;
-using DevToolVault.Core.Services;
-using DevToolVault.Features.Filters;
-using DevToolVault.Refatorado.Core.Models;
 using DevToolVault.Refatorado.Core.Services;
-using DevToolVault.ViewModels;
-using Ookii.Dialogs.Wpf;
+using DevToolVault.Core.Models;
 
-namespace DevToolVault.Features.Export // Ensure namespace matches x:Class
+namespace DevToolVault.Features.Export
 {
     public partial class ExportarCodigoWindow : Window
     {
-        private readonly ExportarCodigoViewModel _viewModel;
-
-        public ExportarCodigoWindow(FileFilterManager filterManager)
+        public ExportarCodigoWindow(ExportarCodigoViewModel viewModel) // ViewModel injetado
         {
-            InitializeComponent(); // This should work now if XAML is correct
-            _viewModel = new ExportarCodigoViewModel(filterManager);
-            DataContext = _viewModel;
+            InitializeComponent();
+            DataContext = viewModel;
         }
 
-        private async void SelectDirectoryButton_Click(object sender, RoutedEventArgs e)
+        // --- Manipuladores de Evento para botões que NÃO usam comandos do ViewModel ---
+        // Estes interagem diretamente com o UserControl FileSystemTreeView
+
+        private void BtnExpandAll_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new Ookii.Dialogs.Wpf.VistaFolderBrowserDialog();
-            if (dialog.ShowDialog(this) == true)
-            {
-                await _viewModel.LoadDirectoryAsync(dialog.SelectedPath);
-            }
+            // Chama o método do UserControl - garantindo que fileTreeView existe
+            fileTreeView?.SetAllExpanded(true); // Adicionado ? para segurança
         }
 
-        private async void FilterSelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void BtnCollapseAll_Click(object sender, RoutedEventArgs e)
         {
-            if (e.AddedItems?.Count > 0 && e.AddedItems[0] is FilterProfile profile)
-            {
-                await _viewModel.SetActiveProfile(profile);
-            }
+            // Chama o método do UserControl - garantindo que fileTreeView existe
+            fileTreeView?.SetAllExpanded(false); // Adicionado ? para segurança
         }
+
+        private void ChkSelectAll_Checked(object sender, RoutedEventArgs e)
+        {
+            // Chama o método do UserControl para selecionar tudo - garantindo que fileTreeView existe
+            fileTreeView?.SetAllItemsChecked(true); // Adicionado ? para segurança
+        }
+
+        private void ChkSelectAll_Unchecked(object sender, RoutedEventArgs e)
+        {
+            // Chama o método do UserControl para desmarcar tudo - garantindo que fileTreeView existe
+            fileTreeView?.SetAllItemsChecked(false); // Adicionado ? para segurança
+        }
+
+        // --- Fim dos manipuladores de evento ---
     }
 }
