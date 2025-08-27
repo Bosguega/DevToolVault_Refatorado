@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DevToolVault"
         xmlns:controls="clr-namespace:DevToolVault.Controls"
-        xmlns:converters="clr-namespace:DevToolVault.Features.Export"
+        xmlns:converters="clr-namespace:DevToolVault.Converters"
         mc:Ignorable="d"
         Title="Exportar Código" Height="600" Width="800">
 

@@ -1,8 +1,13 @@
-﻿<Window x:Class="DevToolVault.Features.Structure.EstruturaWindow"
+﻿<!-- DevToolVault_Refatorado/Features/Structure/EstruturaWindow.xaml -->
+<Window x:Class="DevToolVault.Features.Structure.EstruturaWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:controls="clr-namespace:DevToolVault.Controls"
-        Title="Estrutura de Arquivos" Height="600" Width="900">
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DevToolVault.Features.Structure"
+        mc:Ignorable="d"
+        Title="Estrutura de Arquivos" Height="600" Width="900"
+        d:DataContext="{d:DesignInstance Type=local:EstruturaViewModel, IsDesignTimeCreatable=False}">
 
     <Grid Margin="10">
         <Grid.ColumnDefinitions>
@@ -10,22 +15,33 @@
             <ColumnDefinition Width="2*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- TreeView -->
-        <controls:FileSystemTreeView x:Name="fileTreeView" Grid.Row="0" Grid.Column="0"/>
+        <!-- Linha 1: Caminho da pasta e botões -->
+        <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBox x:Name="txtFolderPath" Text="{Binding SelectedPath, UpdateSourceTrigger=PropertyChanged}" Width="300" Margin="0,0,5,0" IsEnabled="{Binding IsGenerating, Converter={StaticResource InverseBooleanConverter}}" />
+            <Button Content="Procurar Pasta" Command="{Binding BrowseFolderCommand}" Width="120" Margin="0,0,5,0"/>
+            <TextBlock Text="{Binding CurrentProfileName, StringFormat='Perfil Atual: {0}'}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+        </StackPanel>
 
-        <!-- TextBox para exibir a estrutura -->
-        <TextBox x:Name="txtStructure" Grid.Row="0" Grid.Column="1"
-                 IsReadOnly="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
-                 FontFamily="Consolas" FontSize="12" TextWrapping="NoWrap"/>
+        <!-- Linha 2: TextBox multiline para mostrar estrutura gerada -->
+        <TextBox x:Name="txtStructure" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                 Text="{Binding StructureText, Mode=OneWay}"
+                 VerticalScrollBarVisibility="Auto"
+                 HorizontalScrollBarVisibility="Auto"
+                 FontFamily="Courier New" FontSize="12" TextWrapping="NoWrap"
+                 IsReadOnly="True"/>
 
-        <!-- Botões -->
-        <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,0,0">
-            <Button Content="Atualizar Estrutura" Width="150" Margin="5" Click="BtnUpdateStructure_Click"/>
-            <Button Content="Fechar" Width="80" Margin="5" Click="BtnClose_Click"/>
+        <!-- Linha 3: Botões de ação -->
+        <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,0,0">
+            <Button Content="Gerar Estrutura" Command="{Binding GenerateStructureCommand}" Width="120" Margin="5"/>
+            <Button Content="Copiar" Command="{Binding CopyStructureCommand}" Width="80" Margin="5"/>
+            <Button Content="Salvar" Command="{Binding SaveStructureCommand}" Width="80" Margin="5"/>
+            <Button Content="Fechar" Command="{Binding CloseCommand}" Width="80" Margin="5"/>
+            <!-- Ou usar o botão padrão de fechamento -->
         </StackPanel>
     </Grid>
 </Window>
