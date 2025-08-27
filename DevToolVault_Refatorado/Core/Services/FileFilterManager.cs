@@ -1,30 +1,31 @@
-﻿using System;
+﻿// DevToolVault_Refatorado/Core/Services/FileFilterManager.cs
+using DevToolVault.Refatorado.Core.Models; // Assumindo que FilterProfile está aqui
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.Json;
 using System.Linq;
-using DevToolVault.Refatorado.Core.Models;
+using System.Text.Json;
 
 namespace DevToolVault.Refatorado.Core.Services
 {
-    public class FileFilterManager
+    public class FileFilterManager // Ou FileFilterManagerService
     {
         private readonly string _filtersDirectory;
-        private List<FilterProfile> _profiles = new();
+        private readonly List<FilterProfile> _profiles;
         private FilterProfile _activeProfile;
-        private static readonly JsonSerializerOptions _jsonOptions = new()
-        {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
+
+        public event EventHandler ActiveProfileChanged;
 
         public FileFilterManager(string filtersDirectory = null)
         {
             _filtersDirectory = filtersDirectory ?? Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 "DevToolVault", "Filters");
+
+            _profiles = new List<FilterProfile>();
             EnsureDirectoryExists();
-            LoadDefaultFilters();
+            LoadDefaultFilters(); // Carrega os perfis embutidos
+            LoadCustomProfiles(); // Carrega os perfis personalizados do usuário
         }
 
         private void EnsureDirectoryExists()
@@ -33,51 +34,23 @@ namespace DevToolVault.Refatorado.Core.Services
                 Directory.CreateDirectory(_filtersDirectory);
         }
 
+        /// <summary>
+        /// Carrega os perfis embutidos padrão.
+        /// </summary>
         private void LoadDefaultFilters()
         {
-            var builtInProfiles = new[]
+            var builtInProfiles = BuiltInProfiles.GetProfiles(); // <<< Usando a nova classe
+            foreach (var profile in builtInProfiles)
             {
-                new
-                {
-                    Name = "Flutter",
-                    Description = "Filtro para projetos Flutter",
-                    IgnorePatterns = new List<string>
-                    {
-                        "android", "ios", "linux", "macos", "windows", "web",
-                        "build", "dart_tool", ".dart_tool", ".pub", ".flutter-plugins",
-                        ".idea", ".vscode", ".vs",
-                        "*.g.dart", "*.r.dart", "*.gr.dart", "*.freezed.dart",
-                        "*.inject.dart", "*.mocks.dart",
-                        "*.apk", "*.aab", "*.ipa", "*.app", "*.exe", "*.dll",
-                        "*.so", "*.dylib", "*.jar", "*.aar", "*.framework",
-                        ".DS_Store", "Thumbs.db", "desktop.ini",
-                        "*.log", "*.cache", "*.tmp"
-                    },
-                    CodeExtensions = new List<string> { ".dart", ".yaml", ".yml", ".json", ".xml", ".html", ".css", ".js", ".ts" }
-                },
-                // ... outros perfis ...
-            };
-
-            foreach (var p in builtInProfiles)
-            {
-                _profiles.Add(new FilterProfile
-                {
-                    Name = p.Name,
-                    Description = p.Description,
-                    IgnorePatterns = p.IgnorePatterns,
-                    CodeExtensions = p.CodeExtensions,
-                    IgnoreEmptyFolders = true,
-                    ShowFileSize = false,
-                    ShowSystemFiles = false,
-                    ShowOnlyCodeFiles = true,
-                    IsBuiltIn = true
-                });
+                // Garante que os perfis embutidos sejam marcados como tal
+                profile.IsBuiltIn = true;
+                _profiles.Add(profile);
             }
-
-            _activeProfile = _profiles.FirstOrDefault();
-            LoadCustomProfiles();
         }
 
+        /// <summary>
+        /// Carrega os perfis personalizados salvos pelo usuário.
+        /// </summary>
         private void LoadCustomProfiles()
         {
             try
@@ -91,6 +64,7 @@ namespace DevToolVault.Refatorado.Core.Services
                         var profile = JsonSerializer.Deserialize<FilterProfile>(json);
                         if (profile != null)
                         {
+                            // Garante que perfis carregados não sejam considerados embutidos
                             profile.IsBuiltIn = false;
                             _profiles.Add(profile);
                         }
@@ -107,59 +81,112 @@ namespace DevToolVault.Refatorado.Core.Services
             }
         }
 
+        /// <summary>
+        /// Recarrega os perfis a partir do armazenamento padrão (embutidos e do arquivo).
+        /// </summary>
+        public void ReloadProfiles()
+        {
+            var oldActiveProfileName = _activeProfile?.Name;
+
+            _profiles.Clear();
+            LoadDefaultFilters(); // Recarrega os perfis embutidos
+            LoadCustomProfiles(); // Recarrega os perfis salvos pelo usuário
+
+            // Tenta restaurar o perfil ativo
+            if (!string.IsNullOrEmpty(oldActiveProfileName))
+            {
+                var profileToActivate = _profiles.FirstOrDefault(p => p.Name.Equals(oldActiveProfileName, StringComparison.OrdinalIgnoreCase));
+                if (profileToActivate != null)
+                {
+                    SetActiveProfile(profileToActivate);
+                }
+                else
+                {
+                    // Se não encontrar, define o primeiro perfil como ativo, ou null
+                    SetActiveProfile(_profiles.FirstOrDefault());
+                }
+            }
+            // Se oldActiveProfileName for null/empty, mantém _activeProfile como null.
+        }
+
+
         public IEnumerable<FilterProfile> GetProfiles() => _profiles;
+
         public FilterProfile GetActiveProfile() => _activeProfile;
 
         public void SetActiveProfile(FilterProfile profile)
         {
-            ArgumentNullException.ThrowIfNull(profile);
+            if (profile != null && !_profiles.Contains(profile))
+            {
+                throw new ArgumentException("O perfil não está na lista de perfis gerenciados.", nameof(profile));
+            }
+
             _activeProfile = profile;
+            ActiveProfileChanged?.Invoke(this, EventArgs.Empty);
         }
 
         public void SaveProfile(FilterProfile profile)
         {
-            ArgumentNullException.ThrowIfNull(profile);
-            var fileName = $"{profile.Name}.json";
-            var filePath = Path.Combine(_filtersDirectory, fileName);
-            var json = JsonSerializer.Serialize(profile, _jsonOptions);
-            File.WriteAllText(filePath, json);
+            if (profile == null) throw new ArgumentNullException(nameof(profile));
 
-            var existing = _profiles.FirstOrDefault(p => p.Name == profile.Name);
-            if (existing != null)
-                _profiles.Remove(existing);
-            _profiles.Add(profile);
+            if (profile.IsBuiltIn)
+            {
+                throw new ArgumentException("Perfis embutidos não podem ser salvos.", nameof(profile));
+            }
+
+            // Se for um novo perfil (não está na lista), adiciona
+            if (!_profiles.Contains(profile))
+            {
+                profile.IsBuiltIn = false; // Garante que novos perfis não sejam embutidos
+                _profiles.Add(profile);
+            }
+
+            try
+            {
+                var fileName = Path.Combine(_filtersDirectory, $"{profile.Name}.json");
+                var json = JsonSerializer.Serialize(profile, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(fileName, json);
+            }
+            catch (Exception ex)
+            {
+                // Em uma aplicação real, você pode querer logar o erro ou lançar uma exceção mais específica
+                System.Diagnostics.Debug.WriteLine($"Erro ao salvar perfil: {ex.Message}");
+                throw; // Relança para que o chamador possa tratar
+            }
         }
 
         public void DeleteProfile(FilterProfile profile)
         {
-            ArgumentNullException.ThrowIfNull(profile);
-            if (profile.IsBuiltIn) return;
+            if (profile == null) throw new ArgumentNullException(nameof(profile));
 
-            var fileName = $"{profile.Name}.json";
-            var filePath = Path.Combine(_filtersDirectory, fileName);
-            if (File.Exists(filePath))
-                File.Delete(filePath);
-
-            _profiles.Remove(profile);
-            if (_activeProfile == profile)
-                _activeProfile = _profiles.FirstOrDefault();
-        }
-
-        public FilterProfile CreateProfile(string name, string description = null)
-        {
-            var profile = new FilterProfile
+            if (profile.IsBuiltIn)
             {
-                Name = name,
-                Description = description,
-                IgnorePatterns = new(_activeProfile.IgnorePatterns),
-                CodeExtensions = new(_activeProfile.CodeExtensions),
-                IgnoreEmptyFolders = _activeProfile.IgnoreEmptyFolders,
-                ShowFileSize = _activeProfile.ShowFileSize,
-                ShowSystemFiles = _activeProfile.ShowSystemFiles,
-                ShowOnlyCodeFiles = _activeProfile.ShowOnlyCodeFiles,
-                IsBuiltIn = false
-            };
-            return profile;
+                throw new ArgumentException("Perfis embutidos não podem ser excluídos.", nameof(profile));
+            }
+
+            if (_profiles.Remove(profile))
+            {
+                try
+                {
+                    var fileName = Path.Combine(_filtersDirectory, $"{profile.Name}.json");
+                    if (File.Exists(fileName))
+                    {
+                        File.Delete(fileName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Em uma aplicação real, você pode querer logar o erro
+                    System.Diagnostics.Debug.WriteLine($"Erro ao excluir arquivo do perfil: {ex.Message}");
+                    // Pode optar por relançar ou apenas continuar
+                }
+
+                // Se o perfil excluído era o ativo, defina outro ou null
+                if (_activeProfile == profile)
+                {
+                    SetActiveProfile(_profiles.FirstOrDefault());
+                }
+            }
         }
     }
 }
