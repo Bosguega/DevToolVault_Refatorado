@@ -5,7 +5,7 @@ using System.Windows.Data;
 
 namespace DevToolVault.Converters
 {
-    public class InverseBooleanToVisibilityConverter : IValueConverter
+    public class InverseBooleanConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {

@@ -13,7 +13,7 @@
         <!-- Ensure BooleanToVisibilityConverter is available or defined elsewhere -->
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <!-- Make sure InverseBooleanToVisibilityConverter.cs exists and is compiled -->
-        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
     </Window.Resources>
 
     <Grid>
