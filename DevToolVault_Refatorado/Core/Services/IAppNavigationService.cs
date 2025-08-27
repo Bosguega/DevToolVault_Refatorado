@@ -1,5 +1,4 @@
-﻿// Core/Services/IAppNavigationService.cs
-using System.Windows;
+﻿using System.Windows;
 
 namespace DevToolVault.Core.Services
 {

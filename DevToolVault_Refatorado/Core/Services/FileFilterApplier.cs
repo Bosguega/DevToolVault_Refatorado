@@ -9,7 +9,7 @@ namespace DevToolVault.Services
 {
     public class FileFilterApplier
     {
-        private readonly FileFilterManager _filterManager;
+        private FileFilterManager _filterManager;
 
         public FileFilterApplier(FileFilterManager filterManager)
         {
