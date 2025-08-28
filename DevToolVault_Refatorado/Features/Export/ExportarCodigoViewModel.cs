@@ -1,11 +1,7 @@
-﻿using DevToolVault.Core.Commands;
-using DevToolVault.Core.Models;
+﻿using DevToolVault.Core.Models;
 using DevToolVault.Core.Services;
-using DevToolVault.Refatorado.Core.Models;
 using DevToolVault.Refatorado.Core.Services;
 using DevToolVault.Services;
-using Microsoft.Win32;
-using Ookii.Dialogs.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -28,7 +24,7 @@ namespace DevToolVault.Features.Export
         private ObservableCollection<FileSystemItem> _fileSystemItems;
         private string _currentPath;
         private bool _isLoading;
-        private FilterProfile _activeProfile;
+        private bool _selectAll;
 
         public ObservableCollection<FileSystemItem> FileSystemItems
         {
@@ -39,27 +35,23 @@ namespace DevToolVault.Features.Export
         public string CurrentPath
         {
             get => _currentPath;
-            set
-            {
-                if (SetProperty(ref _currentPath, value))
-                    RaiseCommandsCanExecuteChanged();
-            }
+            set => SetProperty(ref _currentPath, value);
         }
 
         public bool IsLoading
         {
             get => _isLoading;
-            set
-            {
-                if (SetProperty(ref _isLoading, value))
-                    RaiseCommandsCanExecuteChanged();
-            }
+            set => SetProperty(ref _isLoading, value);
         }
 
-        public FilterProfile ActiveProfile
+        public bool SelectAll
         {
-            get => _activeProfile;
-            set => SetProperty(ref _activeProfile, value);
+            get => _selectAll;
+            set
+            {
+                if (SetProperty(ref _selectAll, value))
+                    SetAllItemsChecked(_selectAll);
+            }
         }
 
         // Comandos
@@ -67,6 +59,8 @@ namespace DevToolVault.Features.Export
         public ICommand ExportTextCommand { get; }
         public ICommand ExportPdfCommand { get; }
         public ICommand ExportZipCommand { get; }
+        public ICommand ExpandAllCommand { get; }
+        public ICommand CollapseAllCommand { get; }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -77,53 +71,22 @@ namespace DevToolVault.Features.Export
             _treeGenerator = new TreeGeneratorService(_filterManager);
 
             FileSystemItems = new ObservableCollection<FileSystemItem>();
-            ActiveProfile = _filterManager.GetActiveProfile();
 
-            // Inicializa comandos
-            SelectFolderCommand = new RelayCommand(async () => await SelectFolderAsync(), () => !IsLoading);
-            ExportTextCommand = new RelayCommand(async () => await ExportAsync(ExportFormat.Text), CanExport);
-            ExportPdfCommand = new RelayCommand(async () => await ExportAsync(ExportFormat.Pdf), CanExport);
-            ExportZipCommand = new RelayCommand(async () => await ExportAsync(ExportFormat.Zip), CanExport);
-        }
-
-        private bool CanExport()
-        {
-            return !IsLoading && !string.IsNullOrWhiteSpace(CurrentPath) && Directory.Exists(CurrentPath) && FileSystemItems.Any();
-        }
-
-        private void RaiseCommandsCanExecuteChanged()
-        {
-            // Atualiza todos os comandos dependentes
-            //(SelectFolderCommand as RelayCommand)?.RaiseCanExecuteChanged();
-            //(ExportTextCommand as RelayCommand)?.RaiseCanExecuteChanged();
-            //(ExportPdfCommand as RelayCommand)?.RaiseCanExecuteChanged();
-           // (ExportZipCommand as RelayCommand)?.RaiseCanExecuteChanged();
-        }
-
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
-        {
-            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
-            field = value;
-            OnPropertyChanged(propertyName);
-            return true;
+            SelectFolderCommand = new RelayCommand(async _ => await SelectFolderAsync());
+            ExportTextCommand = new RelayCommand(async _ => await ExportAsync(ExportFormat.Text));
+            ExportPdfCommand = new RelayCommand(async _ => await ExportAsync(ExportFormat.Pdf));
+            ExportZipCommand = new RelayCommand(async _ => await ExportAsync(ExportFormat.Zip));
+            ExpandAllCommand = new RelayCommand(_ => SetAllExpanded(true));
+            CollapseAllCommand = new RelayCommand(_ => SetAllExpanded(false));
         }
 
         private async Task SelectFolderAsync()
         {
-            var dialog = new VistaFolderBrowserDialog();
+            var dialog = new Ookii.Dialogs.Wpf.VistaFolderBrowserDialog();
             if (!string.IsNullOrWhiteSpace(CurrentPath) && Directory.Exists(CurrentPath))
-            {
                 dialog.SelectedPath = CurrentPath;
-            }
 
-            var ownerWindow = GetOwnerWindow();
-
-            if (dialog.ShowDialog(ownerWindow) == true)
+            if (dialog.ShowDialog() == true)
             {
                 CurrentPath = dialog.SelectedPath;
                 await LoadDirectoryAsync(CurrentPath);
@@ -132,19 +95,17 @@ namespace DevToolVault.Features.Export
 
         public async Task LoadDirectoryAsync(string path)
         {
-            if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path)) return;
+            if (!Directory.Exists(path)) return;
 
             IsLoading = true;
             try
             {
-                // Task.Run é necessário aqui porque GenerateTree é CPU-bound
                 var items = await Task.Run(() => _treeGenerator.GenerateTree(path));
                 FileSystemItems = new ObservableCollection<FileSystemItem>(items);
             }
             catch (Exception ex)
             {
-                var ownerWindow = GetOwnerWindow();
-                MessageBox.Show(ownerWindow, $"Erro ao carregar diretório: {ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Erro ao carregar diretório: {ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -154,64 +115,38 @@ namespace DevToolVault.Features.Export
 
         private async Task ExportAsync(ExportFormat format)
         {
-            if (!CanExport()) return;
-
             var selectedItems = new List<FileSystemItem>();
             GetSelectedItemsRecursive(FileSystemItems, selectedItems);
 
-            var ownerWindow = GetOwnerWindow();
-
             if (!selectedItems.Any())
             {
-                MessageBox.Show(ownerWindow, "Nenhum item selecionado para exportação.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Nenhum item selecionado.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            string filter = "";
-            string defaultExt = "";
-
-            switch (format)
+            var saveDialog = new Microsoft.Win32.SaveFileDialog
             {
-                case ExportFormat.Text:
-                    filter = "Arquivo de Texto (*.txt)|*.txt";
-                    defaultExt = ".txt";
-                    break;
-                case ExportFormat.Markdown:
-                    filter = "Arquivo Markdown (*.md)|*.md";
-                    defaultExt = ".md";
-                    break;
-                case ExportFormat.Pdf:
-                    filter = "Documento PDF (*.pdf)|*.pdf";
-                    defaultExt = ".pdf";
-                    break;
-                case ExportFormat.Zip:
-                    filter = "Arquivo ZIP (*.zip)|*.zip";
-                    defaultExt = ".zip";
-                    break;
-            }
-
-            var saveDialog = new SaveFileDialog
-            {
-                Filter = filter,
-                FileName = $"Export_{Path.GetFileName(CurrentPath)}{defaultExt}"
+                Filter = format switch
+                {
+                    ExportFormat.Text => "TXT (*.txt)|*.txt",
+                    ExportFormat.Pdf => "PDF (*.pdf)|*.pdf",
+                    ExportFormat.Zip => "ZIP (*.zip)|*.zip",
+                    _ => "Arquivo (*)|*.*"
+                },
+                FileName = $"Export_{Path.GetFileName(CurrentPath)}"
             };
 
-            if (saveDialog.ShowDialog(ownerWindow) == true)
+            if (saveDialog.ShowDialog() == true)
             {
                 IsLoading = true;
                 try
                 {
                     await _exportService.ExportAsync(selectedItems, saveDialog.FileName, format);
-
-                    MessageBox.Show(ownerWindow,
-                        $"Exportação concluída com sucesso para: {saveDialog.FileName}",
-                        "Sucesso", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show($"Exportação concluída: {saveDialog.FileName}", "Sucesso", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ownerWindow,
-                        $"Erro durante a exportação: {ex.Message}",
-                        "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Erro durante exportação: {ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
                 finally
                 {
@@ -222,21 +157,69 @@ namespace DevToolVault.Features.Export
 
         private void GetSelectedItemsRecursive(IEnumerable<FileSystemItem> items, List<FileSystemItem> selectedItems)
         {
-            if (items == null) return;
-
             foreach (var item in items)
             {
                 if (item.IsChecked == true)
                     selectedItems.Add(item);
-
-                if (item.Children != null && item.Children.Any())
+                if (item.Children != null)
                     GetSelectedItemsRecursive(item.Children, selectedItems);
             }
         }
 
-        private Window GetOwnerWindow()
+        private void SetAllItemsChecked(bool isChecked)
         {
-            return Application.Current?.Windows.OfType<Window>().FirstOrDefault(x => x.IsActive) ?? Application.Current?.MainWindow;
+            void CheckAll(IEnumerable<FileSystemItem> items)
+            {
+                foreach (var item in items)
+                {
+                    item.IsChecked = isChecked;
+                    if (item.Children != null)
+                        CheckAll(item.Children);
+                }
+            }
+            CheckAll(FileSystemItems);
+        }
+
+        private void SetAllExpanded(bool isExpanded)
+        {
+            void ExpandAll(IEnumerable<FileSystemItem> items)
+            {
+                foreach (var item in items)
+                {
+                    item.IsExpanded = isExpanded;
+                    if (item.Children != null)
+                        ExpandAll(item.Children);
+                }
+            }
+            ExpandAll(FileSystemItems);
+        }
+
+        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string propName = null)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+            field = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propName));
+            return true;
+        }
+
+        public class RelayCommand : ICommand
+        {
+            private readonly Action<object> _execute;
+            private readonly Func<object, bool> _canExecute;
+
+            public RelayCommand(Action<object> execute, Func<object, bool> canExecute = null)
+            {
+                _execute = execute;
+                _canExecute = canExecute;
+            }
+
+            public bool CanExecute(object parameter) => _canExecute?.Invoke(parameter) ?? true;
+            public void Execute(object parameter) => _execute(parameter);
+            public event EventHandler CanExecuteChanged
+            {
+                add => CommandManager.RequerySuggested += value;
+                remove => CommandManager.RequerySuggested -= value;
+            }
         }
     }
 }
